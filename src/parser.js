@@ -10,9 +10,13 @@ const aelGrammar = ohm.grammar(String.raw`Ael {
   Statement = let id "=" Exp                  --vardec
             | Var "=" Exp                     --assign
             | print Exp                       --print
-  Exp       = Exp ("+" | "-") Term            --binary
+  Exp       = Exp "==" Exp1                   --binary
+            | Exp1
+  Exp1      = Exp1 ("+" | "-") Term           --binary
             | Term
-  Term      = Term ("*"| "/") Factor          --binary
+  Term      = Term ("*"| "/" | "%") Factor    --binary
+            | Expo
+  Expo      = Factor "**" Expo                --binary
             | Factor
   Factor    = Var
             | num
@@ -43,6 +47,12 @@ const astBuilder = aelGrammar.createSemantics().addOperation("ast", {
     return new ast.PrintStatement(argument.ast())
   },
   Exp_binary(left, op, right) {
+    return new ast.BinaryExpression(op.sourceString, left.ast(), right.ast())
+  },
+  Exp1_binary(left, op, right) {
+    return new ast.BinaryExpression(op.sourceString, left.ast(), right.ast())
+  },
+  Expo_binary(left, op, right) {
     return new ast.BinaryExpression(op.sourceString, left.ast(), right.ast())
   },
   Term_binary(left, op, right) {
