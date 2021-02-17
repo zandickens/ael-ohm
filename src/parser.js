@@ -15,13 +15,14 @@ const aelGrammar = ohm.grammar(String.raw`Ael {
   Exp1      = Exp1 ("+" | "-") Term           --binary
             | Term
   Term      = Term ("*"| "/" | "%") Factor    --binary
-            | Expo
-  Expo      = Factor "**" Expo                --binary
             | Factor
-  Factor    = Var
+  Factor    = ("-" | abs | sqrt) Factor       --unary
+            | Expo
+  Expo      = Expo "**" Highest               --binary
+            | Highest
+  Highest   = Var
             | num
             | "(" Exp ")"                     --parens
-            | ("-" | abs | sqrt) Factor       --unary
   Var       = id
   num       = digit+ ("." digit+)?
   let       = "let" ~alnum
@@ -61,7 +62,7 @@ const astBuilder = aelGrammar.createSemantics().addOperation("ast", {
   Factor_unary(op, operand) {
     return new ast.UnaryExpression(op.sourceString, operand.ast())
   },
-  Factor_parens(_open, expression, _close) {
+  Highest_parens(_open, expression, _close) {
     return expression.ast()
   },
   Var(id) {
